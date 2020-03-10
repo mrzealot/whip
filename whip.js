@@ -202,10 +202,10 @@ class Commander {
                 fs.writeFileSync(this.args.config, yaml.safeDump(conf))
                 verbose(`Successfully set config key "${key}" to value "${val}"`)
             } else {
-                verbose(conf[key])
+                console.log(conf[key])
             }
         } else {
-            verbose(conf)
+            console.log(conf)
         }
     }
 
