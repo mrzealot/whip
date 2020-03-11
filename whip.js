@@ -233,6 +233,8 @@ class Commander {
 
         mkdirp.sync(path.dirname(file))
         fs.writeFileSync(file, content)
+
+        if (!this.lookup('noopen')) open(file)
     }
 
     execute() {
