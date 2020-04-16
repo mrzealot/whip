@@ -229,10 +229,10 @@ class Commander {
         const file = now.format(format)
         if (fs.existsSync(file) && !this.lookup('force')) {
             console.log(`File ${file} already exists, so you have to --force this!`)
+        } else {
+            mkdirp.sync(path.dirname(file))
+            fs.writeFileSync(file, content)
         }
-
-        mkdirp.sync(path.dirname(file))
-        fs.writeFileSync(file, content)
 
         if (!this.lookup('noopen')) open(file)
     }
