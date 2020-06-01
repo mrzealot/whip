@@ -309,7 +309,7 @@ require('yargs')
         const row = [from.format('YYYY-MM-DD')]
         for (const [group_key, group] of Object.entries(labels)) {
             for (const key of group) {
-                let val = data[group_key] ? data[group_key][key] : ''
+                let val = data && data[group_key] ? data[group_key][key] : ''
                 val = val ? `"${val}"` : val
                 row.push(val)
             }
