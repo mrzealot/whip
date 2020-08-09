@@ -108,7 +108,12 @@ const actual = (when, now) => {
 
 const parse = async (file) => {
     let raw = ''
+    let comments = ''
     let in_yaml = false
+
+    if (!fs.existsSync(file)) {
+        return [{}, '']
+    }
 
     const rl = readline.createInterface({
         input: fs.createReadStream(file)
@@ -119,7 +124,7 @@ const parse = async (file) => {
             in_yaml = !in_yaml
             if (!in_yaml) {
                 try {
-                    return yaml.safeLoad(raw)
+                    raw = yaml.safeLoad(raw)
                 } catch (ex) {
                     throw new Error(`Failed to parse ${file}`, ex)
                 }
@@ -129,8 +134,12 @@ const parse = async (file) => {
 
         if (in_yaml) {
             raw += line + '\n'
+        } else {
+            comments += line + '\n'
         }
     }
+
+    return [raw, comments]
 }
 
 const input = (file) => {
@@ -235,7 +244,7 @@ require('yargs')
     if (args.yesterday) {
         const yesterday = moment(now).subtract(1, 'day')
         const old_log = yesterday.format(args.format)
-        const old_data = await parse(old_log)
+        const [old_data,] = await parse(old_log)
         for (const [group_key, group] of Object.entries(old_data)) {
             for (const [key, val] of Object.entries(group)) {
                 if (!val || val == 'no') { // 'no' check added for YAML 1.1 compat
@@ -246,7 +255,7 @@ require('yargs')
         }
     }
 
-    const content = `---\n${yaml.safeDump(header)}---\n\n# ${now.format('dddd')} Notes:\n\n- `
+    const content = `---\n${yaml.safeDump(header)}---\n\n## ${now.format('YY-MM-DD')} ${now.format('dddd')} Notes:\n\n- `
     const file = now.format(args.format)
     if (fs.existsSync(file) && !args.force) {
         console.log(`File ${file} already exists, so you have to --force this!`)
@@ -273,6 +282,11 @@ require('yargs')
         alias: 'o',
         default: 'stats.csv',
         describe: 'Output CSV file',
+        type: 'string'
+    })
+    .option('md', {
+        default: 'comments.md',
+        describe: 'Output MD file',
         type: 'string'
     })
     .option('open', {
@@ -303,10 +317,13 @@ require('yargs')
         }
     }
 
+    let comments = ''
     while (from.isBefore(to)) {
         const file = from.format(args.format)
-        const data = await parse(file)
-        const row = [from.format('YYYY-MM-DD')]
+        const [data, comment] = await parse(file)
+        const date_format = from.format('YYYY-MM-DD')
+        comments += `${comment}\n\n\n`
+        const row = [date_format]
         for (const [group_key, group] of Object.entries(labels)) {
             for (const key of group) {
                 let val = data && data[group_key] ? data[group_key][key] : ''
@@ -320,6 +337,7 @@ require('yargs')
 
     const result_text = result.map(row => row.join(',')).join('\n')
     fs.writeFileSync(args.output, result_text)
+    if (args.md) fs.writeFileSync(args.md, comments)
     if (args.open) open(args.output)
 })
 .demandCommand()
