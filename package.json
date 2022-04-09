@@ -8,7 +8,7 @@
   "dependencies": {
     "fs-extra": "^9.0.0",
     "js-yaml": "^3.14.0",
-    "moment": "^2.26.0",
+    "moment": "^2.29.2",
     "open": "^7.0.4",
     "yargs": "^15.3.1"
   },
